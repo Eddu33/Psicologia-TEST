@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  username String @unique
+  password String
+  name     String
+  role     String @default("PROFESSIONAL") // "ADMINISIONISTA" | "PROFESSIONAL"
+  
+  appointments Appointment[]
+  observations ProfessionalObservation[]
+}
+
+model Patient {
+  id          String   @id @default(uuid())
+  firstName   String
+  lastName    String
+  dni         String   @unique
+  age         Int
+  phone       String
+  adminNotes  String?  
+  createdAt   DateTime @default(now())
+  
+  appointments Appointment[]
+  observations ProfessionalObservation[]
+}
+
+model Appointment {
+  id             String   @id @default(uuid())
+  date           String   // "YYYY-MM-DD"
+  startTime      String   // "HH:mm"
+  endTime        String   // "HH:mm"
+  
+  patientId      String
+  patient        Patient  @relation(fields: [patientId], references: [id])
+  
+  professionalId String?  
+  professional   User?    @relation(fields: [professionalId], references: [id])
+  
+  status         String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED, COMPLETED
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ProfessionalObservation {
+  id             String   @id @default(uuid())
+  
+  patientId      String
+  patient        Patient  @relation(fields: [patientId], references: [id])
+  
+  professionalId String
+  professional   User     @relation(fields: [professionalId], references: [id])
+  
+  observation    String
+  
+  createdAt      DateTime @default(now())
+}
