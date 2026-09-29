@@ -88,5 +88,67 @@ export async function getProfessionals() {
 export async function deleteUser(data: FormData) {
   const id = data.get("id") as string;
   await db.user.delete({ where: { id } });
+  
+  await db.auditLog.create({
+    data: {
+      action: "DELETE_USER",
+      entityType: "USER",
+      entityId: id,
+      details: "Se eliminó el usuario",
+    }
+  });
+  
   revalidatePath("/admin");
+  revalidatePath("/admin/users");
+}
+
+export async function createUser(data: FormData) {
+  const name = data.get("name") as string;
+  const username = data.get("username") as string;
+  const password = data.get("password") as string;
+  const role = data.get("role") as string;
+
+  const newUser = await db.user.create({
+    data: { name, username, password, role }
+  });
+  
+  await db.auditLog.create({
+    data: {
+      action: "CREATE_USER",
+      entityType: "USER",
+      entityId: newUser.id,
+      details: `Se creó el usuario ${username} con rol ${role}`,
+    }
+  });
+
+  revalidatePath("/admin/users");
+}
+
+export async function updateUser(data: FormData) {
+  const id = data.get("id") as string;
+  const name = data.get("name") as string;
+  const username = data.get("username") as string;
+  const password = data.get("password") as string;
+  const role = data.get("role") as string;
+
+  const updateData: any = { name, username, role };
+  if (password && password.trim() !== "") {
+    updateData.password = password;
+  }
+
+  await db.user.update({
+    where: { id },
+    data: updateData
+  });
+  
+  await db.auditLog.create({
+    data: {
+      action: "UPDATE_USER",
+      entityType: "USER",
+      entityId: id,
+      details: `Se modificó el perfil de ${username}`,
+    }
+  });
+
+  revalidatePath("/admin/users");
 }
