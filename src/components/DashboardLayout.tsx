@@ -142,14 +142,7 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="hidden sm:flex items-center bg-slate-100/50 px-3 py-2 rounded-xl border border-slate-200 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-sm transition-all duration-200">
-              <Search className="w-4 h-4 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Buscar por nombre, DNI..." 
-                className="bg-transparent border-none focus:outline-none text-sm ml-2 w-64 text-slate-700 placeholder-slate-400"
-              />
-            </div>
+
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right mr-2">

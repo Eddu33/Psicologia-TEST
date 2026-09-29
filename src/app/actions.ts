@@ -210,3 +210,34 @@ export async function updateMyProfile(data: FormData) {
   revalidatePath("/", "layout");
   return { success: true };
 }
+
+export async function updatePatient(data: FormData) {
+  const id = data.get("id") as string;
+  const firstName = data.get("firstName") as string;
+  const lastName = data.get("lastName") as string;
+  const dni = data.get("dni") as string;
+  const age = parseInt(data.get("age") as string);
+  const phone = data.get("phone") as string;
+  const adminNotes = data.get("adminNotes") as string;
+
+  await db.patient.update({
+    where: { id },
+    data: { firstName, lastName, dni, age, phone, adminNotes },
+  });
+
+  revalidatePath("/admisionista/pacientes");
+  revalidatePath("/admisionista");
+}
+
+export async function deletePatient(data: FormData) {
+  const id = data.get("id") as string;
+
+  // We should also delete related appointments and observations to maintain referential integrity if they have cascade on, or do it manually.
+  await db.appointment.deleteMany({ where: { patientId: id } });
+  await db.professionalObservation.deleteMany({ where: { patientId: id } });
+
+  await db.patient.delete({ where: { id } });
+
+  revalidatePath("/admisionista/pacientes");
+  revalidatePath("/admisionista");
+}

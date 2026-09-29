@@ -80,7 +80,10 @@ export default async function AdmisionistaPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {patients.map(patient => (
+                {patients.map(patient => {
+                  const latestAppointment = [...patient.appointments].sort((a, b) => new Date(`${b.date}T${b.startTime}`).getTime() - new Date(`${a.date}T${a.startTime}`).getTime())[0];
+                  
+                  return (
                   <tr key={patient.id} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -97,13 +100,13 @@ export default async function AdmisionistaPage() {
                       {patient.phone}
                     </td>
                     <td className="p-4">
-                      {patient.appointments.length > 0 ? (
+                      {latestAppointment ? (
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-slate-800">
-                            {patient.appointments[0].date}
+                            {latestAppointment.date}
                           </span>
                           <span className="text-xs text-blue-600 font-medium">
-                            {patient.appointments[0].startTime} con {patient.appointments[0].professional?.name || '...'}
+                            {latestAppointment.startTime} con {latestAppointment.professional?.name || '...'}
                           </span>
                         </div>
                       ) : (
@@ -116,7 +119,7 @@ export default async function AdmisionistaPage() {
                       <Link href={`/admisionista/pacientes`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">Ver Ficha</Link>
                     </td>
                   </tr>
-                ))}
+                )})}
                 {patients.length === 0 && (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-slate-500">
