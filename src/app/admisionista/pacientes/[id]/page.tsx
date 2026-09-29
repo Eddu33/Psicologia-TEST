@@ -13,8 +13,10 @@ export default async function AdmisionistaPatientHistoryPage({ params }: { param
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user || user.role !== "ADMISIONISTA") redirect("/login");
 
+  const resolvedParams = await params;
+
   const patient = await db.patient.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       appointments: {
         include: { professional: true },
