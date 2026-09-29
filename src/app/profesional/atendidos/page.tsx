@@ -16,7 +16,7 @@ export default async function ProfesionalAtendidosPage() {
   const patients = await db.patient.findMany({
     where: {
       OR: [
-        { appointments: { some: { professionalId: user.id, status: 'COMPLETED' } } },
+        { appointments: { some: { professionalId: user.id, status: 'ATENDIDO' } } },
         { observations: { some: { professionalId: user.id } } }
       ]
     },

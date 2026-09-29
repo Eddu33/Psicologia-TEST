@@ -26,9 +26,9 @@ export default function LoginPage() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-400/20 rounded-full blur-3xl"></div>
       
       <div className="bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-xl border border-slate-100 w-full max-w-md z-10">
-        <div className="flex justify-center mb-8">
-          <div className="h-16 w-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <HeartPulse className="h-8 w-8 text-white" />
+        <div className="flex justify-center mb-6">
+          <div className="h-20 w-20 flex items-center justify-center">
+            <img src="/logo.png" alt="PsicoApp Logo" className="w-full h-full object-contain" />
           </div>
         </div>
         <div className="text-center mb-10">

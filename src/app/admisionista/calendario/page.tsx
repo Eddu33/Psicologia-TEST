@@ -28,7 +28,7 @@ export default async function AdmisionistaCalendarioPage() {
       <h1 className="text-2xl font-bold text-slate-900 mb-4">Calendario Global y Reagendas</h1>
       <p className="text-sm text-slate-500 mb-6">Visualización de movimientos, reprogramaciones y estados de turnos de todos los profesionales.</p>
       
-      <CalendarClient appointments={appointments} currentUserId={user.id} />
+      <CalendarClient appointments={appointments} currentUserId={user.id} userRole="ADMISIONISTA" />
     </DashboardLayout>
   );
 }

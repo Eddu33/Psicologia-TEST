@@ -211,6 +211,24 @@ export async function updateMyProfile(data: FormData) {
   return { success: true };
 }
 
+export async function assignAppointmentToMe(data: FormData) {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("auth_user_id")?.value;
+  if (!userId) return;
+
+  const appointmentId = data.get("appointmentId") as string;
+  await db.appointment.update({
+    where: { id: appointmentId },
+    data: { professionalId: userId, status: "ASIGNADO" }
+  });
+
+  revalidatePath("/profesional/calendario");
+  revalidatePath("/profesional");
+  revalidatePath("/profesional/pacientes");
+  revalidatePath("/admisionista/calendario");
+  revalidatePath("/admin/calendario");
+}
+
 export async function updatePatient(data: FormData) {
   const id = data.get("id") as string;
   const firstName = data.get("firstName") as string;

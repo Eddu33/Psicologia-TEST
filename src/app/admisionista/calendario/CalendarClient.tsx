@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { assignAppointmentToMe } from "@/app/actions";
 
-export function CalendarClient({ appointments, currentUserId }: { appointments: any[], currentUserId: string }) {
+export function CalendarClient({ appointments, currentUserId, userRole }: { appointments: any[], currentUserId: string, userRole?: string }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedApp, setSelectedApp] = useState<any | null>(null);
 
@@ -123,7 +124,20 @@ export function CalendarClient({ appointments, currentUserId }: { appointments: 
                 <div>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1.5">Profesional Tratante</p>
                   <p className="text-[15px] font-medium text-slate-800 mb-0.5">{selectedApp.professional?.name || 'No asignado'}</p>
-                  <p className="text-sm text-blue-600 font-medium">{selectedApp.status}</p>
+                  
+                  {userRole === 'PROFESSIONAL' && !selectedApp.professionalId ? (
+                    <form action={async (formData) => {
+                      await assignAppointmentToMe(formData);
+                      setSelectedApp({ ...selectedApp, professionalId: currentUserId, professional: { name: "Tú" }, status: "ASIGNADO" });
+                    }}>
+                      <input type="hidden" name="appointmentId" value={selectedApp.id} />
+                      <button type="submit" className="text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold px-3 py-1 rounded-lg transition-colors mt-1">
+                        Auto-asignarme
+                      </button>
+                    </form>
+                  ) : (
+                    <p className="text-sm text-blue-600 font-medium">{selectedApp.status}</p>
+                  )}
                 </div>
               </div>
               

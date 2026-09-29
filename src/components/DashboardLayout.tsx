@@ -177,28 +177,79 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
       {/* Profile Modal */}
       {profileModalOpen && (
         <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-slate-800">Mi Perfil</h2>
+          <div className={`bg-white rounded-2xl shadow-xl w-full max-h-[90vh] overflow-y-auto p-6 ${role === 'PROFESSIONAL' ? 'max-w-3xl' : 'max-w-md'}`}>
+            <div className="flex justify-between items-center mb-6 border-b pb-4">
+              <h2 className="text-xl font-bold text-slate-800">Mi Perfil {role === 'PROFESSIONAL' && 'y Disponibilidad'}</h2>
               <button onClick={() => setProfileModalOpen(false)} className="text-slate-500 hover:text-slate-700">
                 <X className="w-5 h-5" />
               </button>
             </div>
+            
             <form action={async (formData) => {
               await updateMyProfile(formData);
               setProfileModalOpen(false);
-            }} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre</label>
-                <input type="text" name="name" defaultValue={userName} required className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none" />
+            }} className={`grid gap-6 ${role === 'PROFESSIONAL' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+              
+              {/* Basic Info */}
+              <div className="space-y-4">
+                <h3 className="font-bold text-slate-700 mb-2">Datos de Cuenta</h3>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre</label>
+                  <input type="text" name="name" defaultValue={userName} required className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Nueva Contraseña</label>
+                  <input type="password" name="password" placeholder="Dejar en blanco para no cambiar" className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none" />
+                </div>
+                
+                {role !== 'PROFESSIONAL' && (
+                  <button type="submit" className="w-full bg-blue-600 text-white p-3 rounded-xl font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors mt-4">
+                    Guardar Cambios
+                  </button>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Nueva Contraseña</label>
-                <input type="password" name="password" placeholder="Dejar en blanco para no cambiar" className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none" />
-              </div>
-              <button type="submit" className="w-full bg-blue-600 text-white p-3 rounded-xl font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors">
-                Guardar Cambios
-              </button>
+
+              {/* Professional Settings */}
+              {role === 'PROFESSIONAL' && (
+                <div className="space-y-4 border-t md:border-t-0 md:border-l border-slate-100 md:pl-6 pt-4 md:pt-0">
+                  <h3 className="font-bold text-slate-700 mb-2">Configuración de Agenda</h3>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Hora Inicio</label>
+                      <input type="time" defaultValue="08:00" className="w-full border border-slate-200 p-2 rounded-lg text-sm outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Hora Fin</label>
+                      <input type="time" defaultValue="18:00" className="w-full border border-slate-200 p-2 rounded-lg text-sm outline-none" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Días Laborables</label>
+                    <div className="flex gap-1">
+                      {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+                        <button type="button" key={i} className={`w-8 h-8 rounded-full text-xs font-bold border ${i < 5 ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>{d}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Licencias / No Disponible</label>
+                    <div className="flex gap-2">
+                      <input type="date" className="flex-1 border border-slate-200 p-2 rounded-lg text-sm outline-none" title="Desde" />
+                      <input type="date" className="flex-1 border border-slate-200 p-2 rounded-lg text-sm outline-none" title="Hasta" />
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4">
+                    <button type="submit" className="w-full bg-blue-600 text-white p-3 rounded-xl font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors">
+                      Guardar Configuración
+                    </button>
+                  </div>
+                </div>
+              )}
+              
             </form>
           </div>
         </div>
