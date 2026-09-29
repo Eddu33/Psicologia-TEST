@@ -30,7 +30,7 @@ export default async function AdmisionistaPacientesPage() {
   return (
     <DashboardLayout role="ADMISIONISTA" userName={user.name}>
       <h1 className="text-2xl font-bold text-slate-900 mb-4">Directorio Completo de Pacientes</h1>
-      <PatientDirectoryClient patients={patients} currentUserId={user.id} />
+      <PatientDirectoryClient patients={patients} currentUserId={user.id} basePath="/admisionista/pacientes" />
     </DashboardLayout>
   );
 }

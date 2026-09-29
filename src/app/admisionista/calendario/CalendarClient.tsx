@@ -99,47 +99,48 @@ export function CalendarClient({ appointments, currentUserId }: { appointments: 
       </div>
 
       {selectedApp && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-slate-800">Detalles de la Cita</h2>
-              <button onClick={() => setSelectedApp(null)} className="text-slate-500 hover:text-slate-700">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        <div className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-[500px] w-full p-8 relative">
+            <button onClick={() => setSelectedApp(null)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-2 rounded-full transition-colors">
+              <X className="w-5 h-5" />
+            </button>
             
-            <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-slate-900 mb-8">Detalles de la Cita</h2>
+            
+            <div className="space-y-6">
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Paciente</p>
-                <p className="text-sm font-medium text-slate-800">{selectedApp.patient?.lastName}, {selectedApp.patient?.firstName}</p>
-                <p className="text-xs text-slate-500">DNI: {selectedApp.patient?.dni} • Tel: {selectedApp.patient?.phone}</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1.5">Paciente</p>
+                <p className="text-lg font-medium text-slate-800">{selectedApp.patient?.lastName}, {selectedApp.patient?.firstName}</p>
+                <p className="text-sm text-slate-500 mt-0.5">DNI: {selectedApp.patient?.dni} • Tel: {selectedApp.patient?.phone}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              
+              <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Fecha y Hora</p>
-                  <p className="text-sm font-medium text-slate-800">{selectedApp.date}</p>
-                  <p className="text-xs text-slate-500">{selectedApp.startTime} - {selectedApp.endTime}</p>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1.5">Fecha y Hora</p>
+                  <p className="text-[15px] font-medium text-slate-800 mb-0.5">{selectedApp.date}</p>
+                  <p className="text-sm text-slate-500">{selectedApp.startTime} - {selectedApp.endTime}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Profesional Tratante</p>
-                  <p className="text-sm font-medium text-slate-800">{selectedApp.professional?.name || 'No asignado'}</p>
-                  <p className="text-xs text-blue-600 font-medium">{selectedApp.status}</p>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1.5">Profesional Tratante</p>
+                  <p className="text-[15px] font-medium text-slate-800 mb-0.5">{selectedApp.professional?.name || 'No asignado'}</p>
+                  <p className="text-sm text-blue-600 font-medium">{selectedApp.status}</p>
                 </div>
               </div>
-              <div>
-                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Observaciones / Detalles Clínicos</p>
+              
+              <div className="pt-2">
+                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-3">Observaciones / Detalles Clínicos</p>
                  {(() => {
                     const obs = selectedApp.patient?.observations?.find((o: any) => o.professionalId === selectedApp.professionalId);
                     const isVisible = selectedApp.professionalId === currentUserId || !obs;
                     
                     return obs ? (
-                      <div className={`p-3 rounded-xl border border-slate-100 text-sm ${!isVisible ? 'select-none' : 'bg-slate-50'}`}>
-                        <p className={!isVisible ? 'blur-sm text-slate-400' : 'text-slate-700'}>
+                      <div className={`text-[15px] leading-relaxed ${!isVisible ? 'select-none' : ''}`}>
+                        <p className={!isVisible ? 'blur-[4px] text-slate-400' : 'text-slate-700'}>
                           {!isVisible ? "Contenido privado. Solo el profesional tratante puede visualizar estas notas clínicas." : obs.observation}
                         </p>
                       </div>
                     ) : (
-                      <p className="text-sm text-slate-500 italic">No hay notas clínicas registrados para esta consulta.</p>
+                      <p className="text-[15px] text-slate-500 italic">No hay notas clínicas registrados para esta consulta.</p>
                     );
                  })()}
               </div>
