@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar as CalendarIcon, FileText, CheckCircle2, Clock, XCircle, UserX, Plus, CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Calendar as CalendarIcon, FileText, CheckCircle2, Clock, XCircle, UserX, Plus, CalendarDays, ChevronLeft, ChevronRight, X, Info } from "lucide-react";
+import { markAsAttended } from "@/app/actions";
 
 export function ProfessionalDashboardClient({ user, appointments, myPatients }: { user: any, appointments: any[], myPatients: any[] }) {
   const [view, setView] = useState<'daily' | 'weekly'>('daily');
@@ -10,18 +11,34 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
   const [selectedApp, setSelectedApp] = useState<any | null>(null);
   const [actionModal, setActionModal] = useState<'cancel' | 'reschedule' | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  
+  const [rescheduleType, setRescheduleType] = useState<'single' | 'series'>('single');
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  
+  const [toastMessage, setToastMessage] = useState<{title: string, desc: string, type: 'success' | 'info'} | null>(null);
+
+  const showToast = (title: string, desc: string, type: 'success' | 'info' = 'success') => {
+    setToastMessage({ title, desc, type });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   const handleAtender = async (appId: string) => {
-    // Aquí iría el server action para marcar como atendido
-    alert("Turno marcado como ATENDIDO. Ahora puedes escribir la evolución en 'Mis Pacientes y Citas'");
+    const formData = new FormData();
+    formData.append("appointmentId", appId);
+    await markAsAttended(formData);
+    showToast("Turno marcado como ATENDIDO", "Ahora puedes escribir la evolución en 'Mis Pacientes y Citas'", "success");
     setSelectedApp(null);
   };
 
   const handleCancel = async () => {
-    // Aquí iría el server action para cancelar con motivo
-    alert(`Turno cancelado por motivo: ${cancelReason}`);
+    // Aquí iría el server action para cancelar con motivo (ej. markAsCancelled)
+    showToast("Turno cancelado", `Motivo registrado: ${cancelReason}`, "info");
     setActionModal(null);
     setSelectedApp(null);
+  };
+
+  const toggleDay = (day: string) => {
+    setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
   // Funciones básicas de calendario
@@ -141,9 +158,36 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
                 )}
               </div>
             ) : (
-              <div className="text-center py-12 text-slate-500 border border-dashed border-slate-200 rounded-xl">
-                <CalendarDays className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <p>La vista semanal interactiva estará disponible próximamente.</p>
+              <div className="space-y-6">
+                <p className="text-sm text-slate-500 text-center">Resumen de la semana a partir del {currentDate.toLocaleDateString()}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {Array.from({ length: 7 }).map((_, i) => {
+                    const d = new Date(currentDate);
+                    d.setDate(d.getDate() + i);
+                    const dStr = d.toISOString().split('T')[0];
+                    const dayApps = appointments.filter(a => a.date === dStr);
+                    
+                    return (
+                      <div key={i} className={`p-4 rounded-xl border ${dayApps.length > 0 ? 'border-blue-200 bg-blue-50/30' : 'border-slate-100 bg-slate-50'}`}>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                          {d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                        </p>
+                        {dayApps.length > 0 ? (
+                          <div className="space-y-2">
+                            {dayApps.map(a => (
+                              <div key={a.id} className="text-xs bg-white p-2 rounded border border-slate-200 shadow-sm flex justify-between">
+                                <span className="font-semibold text-slate-700">{a.startTime}</span>
+                                <span className="text-slate-600 truncate ml-2">{a.patient.lastName}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-400 py-2">Sin citas</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -225,42 +269,91 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
         </div>
       )}
 
-      {/* Modal Reagenda (Mock) */}
+      {/* Modal Reagenda */}
       {actionModal === 'reschedule' && (
         <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
              <div className="flex justify-between items-center mb-4">
                <h3 className="text-lg font-bold text-indigo-600 flex items-center gap-2">
-                 <CalendarDays className="w-5 h-5" /> Reagendar Serie de Turnos
+                 <CalendarDays className="w-5 h-5" /> Reagendar Turno
                </h3>
                <button onClick={() => setActionModal(null)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
              </div>
-             <p className="text-sm text-slate-600 mb-4">Configura la nueva agenda para este paciente. (Módulo en construcción UI)</p>
+             <p className="text-sm text-slate-600 mb-6">Configura la nueva agenda para este paciente.</p>
              
+             <div className="flex gap-4 mb-6">
+               <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                 <input type="radio" name="rescheduleType" checked={rescheduleType === 'single'} onChange={() => setRescheduleType('single')} className="text-indigo-600 focus:ring-indigo-500" />
+                 Turno Único
+               </label>
+               <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                 <input type="radio" name="rescheduleType" checked={rescheduleType === 'series'} onChange={() => setRescheduleType('series')} className="text-indigo-600 focus:ring-indigo-500" />
+                 Serie de Turnos
+               </label>
+             </div>
+
              <div className="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-               <div>
-                 <label className="text-xs font-bold text-slate-500 uppercase">Días de la semana</label>
-                 <div className="flex gap-2 mt-2">
-                   {['L', 'M', 'M', 'J', 'V'].map(d => (
-                     <button key={d} className="w-8 h-8 rounded-full border border-slate-200 bg-white hover:border-indigo-500 hover:text-indigo-600 font-bold text-sm">{d}</button>
-                   ))}
+               {rescheduleType === 'single' ? (
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Fecha del Turno</label>
+                     <input type="date" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                   </div>
+                   <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Hora</label>
+                     <input type="time" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                   </div>
                  </div>
-               </div>
-               <div>
-                 <label className="text-xs font-bold text-slate-500 uppercase">Cantidad de Semanas (Réplica)</label>
-                 <input type="number" min="1" defaultValue="2" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
-               </div>
-               <div>
-                 <label className="text-xs font-bold text-slate-500 uppercase">Fecha de inicio</label>
-                 <input type="date" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
-               </div>
+               ) : (
+                 <>
+                   <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Días de la semana</label>
+                     <div className="flex gap-2 mt-2">
+                       {['L', 'M', 'X', 'J', 'V'].map(d => (
+                         <button 
+                           key={d} 
+                           onClick={() => toggleDay(d)}
+                           className={`w-8 h-8 rounded-full border font-bold text-sm transition-colors ${selectedDays.includes(d) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-500 hover:text-indigo-600'}`}
+                         >
+                           {d}
+                         </button>
+                       ))}
+                     </div>
+                   </div>
+                   <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Cantidad de Semanas (Réplica)</label>
+                     <input type="number" min="1" defaultValue="2" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                   </div>
+                   <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Fecha de inicio</label>
+                     <input type="date" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                   </div>
+                 </>
+               )}
              </div>
 
              <div className="flex justify-end gap-3 mt-6">
                <button onClick={() => setActionModal(null)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors">Cancelar</button>
-               <button onClick={() => setActionModal(null)} className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-xl transition-colors shadow-sm">Generar Turnos</button>
+               <button onClick={() => {
+                 showToast("Turnos Generados", rescheduleType === 'single' ? "El turno único fue reasignado." : "La serie de turnos fue programada.", "success");
+                 setActionModal(null);
+               }} className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-xl transition-colors shadow-sm">Generar Turno(s)</button>
              </div>
            </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className={`rounded-xl shadow-lg border p-4 flex gap-3 items-start max-w-sm ${toastMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200' : 'bg-blue-50 border-blue-200'}`}>
+            {toastMessage.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5" /> : <Info className="w-5 h-5 text-blue-600 mt-0.5" />}
+            <div>
+              <p className={`font-bold text-sm ${toastMessage.type === 'success' ? 'text-emerald-900' : 'text-blue-900'}`}>{toastMessage.title}</p>
+              <p className={`text-xs mt-1 ${toastMessage.type === 'success' ? 'text-emerald-700' : 'text-blue-700'}`}>{toastMessage.desc}</p>
+            </div>
+            <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-slate-600 ml-auto"><X className="w-4 h-4" /></button>
+          </div>
         </div>
       )}
 

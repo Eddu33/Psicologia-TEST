@@ -229,6 +229,18 @@ export async function assignAppointmentToMe(data: FormData) {
   revalidatePath("/admin/calendario");
 }
 
+export async function markAsAttended(data: FormData) {
+  const appointmentId = data.get("appointmentId") as string;
+  await db.appointment.update({
+    where: { id: appointmentId },
+    data: { status: "ATENDIDO" }
+  });
+
+  revalidatePath("/profesional");
+  revalidatePath("/profesional/atendidos");
+  revalidatePath("/profesional/calendario");
+}
+
 export async function updatePatient(data: FormData) {
   const id = data.get("id") as string;
   const firstName = data.get("firstName") as string;
