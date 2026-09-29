@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Calendar as CalendarIcon, FileText, CheckCircle2, Clock, XCircle, UserX, Plus, CalendarDays, ChevronLeft, ChevronRight, X, Info } from "lucide-react";
-import { markAsAttended } from "@/app/actions";
+import { markAsAttended, saveEvolutionAndReschedule } from "@/app/actions";
 
 export function ProfessionalDashboardClient({ user, appointments, myPatients }: { user: any, appointments: any[], myPatients: any[] }) {
   const [view, setView] = useState<'daily' | 'weekly'>('daily');
@@ -14,6 +14,10 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
   
   const [rescheduleType, setRescheduleType] = useState<'single' | 'series'>('single');
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [rescheduleForm, setRescheduleForm] = useState<any>({});
+  
+  const [pendingReschedules, setPendingReschedules] = useState<Record<string, any>>({});
+  const [selectedPatientIdForReschedule, setSelectedPatientIdForReschedule] = useState<string | null>(null);
   
   const [toastMessage, setToastMessage] = useState<{title: string, desc: string, type: 'success' | 'info'} | null>(null);
 
@@ -44,6 +48,26 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
   // Funciones básicas de calendario
   const todayStr = currentDate.toISOString().split('T')[0];
   const todayAppointments = appointments.filter(a => a.date === todayStr);
+  
+  const attendedTodayPatients = myPatients.filter(p => 
+    p.appointments.some((a: any) => a.date === todayStr && a.status === 'ATENDIDO')
+  );
+
+  const handleSaveEvolution = async (e: React.FormEvent<HTMLFormElement>, patientId: string) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    if (pendingReschedules[patientId]) {
+      formData.append("rescheduleData", JSON.stringify(pendingReschedules[patientId]));
+    }
+    await saveEvolutionAndReschedule(formData);
+    showToast("Evolución Guardada", "Los datos y la reagenda (si hubo) se guardaron correctamente.", "success");
+    setPendingReschedules(prev => {
+      const next = {...prev};
+      delete next[patientId];
+      return next;
+    });
+    (e.target as HTMLFormElement).reset();
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -159,8 +183,8 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
               </div>
             ) : (
               <div className="space-y-6">
-                <p className="text-sm text-slate-500 text-center">Resumen de la semana a partir del {currentDate.toLocaleDateString()}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <p className="text-sm text-slate-500 text-center mb-4">Resumen de la semana a partir del {currentDate.toLocaleDateString()}</p>
+                <div className="flex gap-4 overflow-x-auto pb-4 px-1">
                   {Array.from({ length: 7 }).map((_, i) => {
                     const d = new Date(currentDate);
                     d.setDate(d.getDate() + i);
@@ -168,7 +192,7 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
                     const dayApps = appointments.filter(a => a.date === dStr);
                     
                     return (
-                      <div key={i} className={`p-4 rounded-xl border ${dayApps.length > 0 ? 'border-blue-200 bg-blue-50/30' : 'border-slate-100 bg-slate-50'}`}>
+                      <div key={i} className={`flex-shrink-0 w-64 p-4 rounded-xl border ${dayApps.length > 0 ? 'border-blue-200 bg-blue-50/30' : 'border-slate-100 bg-slate-50'}`}>
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                           {d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
                         </p>
@@ -206,7 +230,7 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
           </div>
           
           <div className="p-5 overflow-y-auto flex-1 space-y-4">
-            {myPatients.length > 0 ? myPatients.map(patient => (
+            {attendedTodayPatients.length > 0 ? attendedTodayPatients.map(patient => (
               <div key={patient.id} className="border border-slate-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-2">
                   <div>
@@ -215,8 +239,9 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
                   </div>
                 </div>
                 
-                <form className="mt-3 flex flex-col gap-2">
+                <form onSubmit={(e) => handleSaveEvolution(e, patient.id)} className="mt-3 flex flex-col gap-2">
                   <input type="hidden" name="patientId" value={patient.id} />
+                  <input type="hidden" name="professionalId" value={user.id} />
                   <textarea 
                     name="observation" 
                     required 
@@ -224,9 +249,20 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
                     rows={3} 
                     placeholder="Escribir evolución u observación (privado)..."
                   ></textarea>
+                  
+                  {pendingReschedules[patient.id] && (
+                    <div className="bg-indigo-50 border border-indigo-100 p-2 rounded-lg text-xs text-indigo-800 flex justify-between items-center">
+                      <span>Reagenda configurada ({pendingReschedules[patient.id].type === 'single' ? 'Turno único' : 'Serie'})</span>
+                      <button type="button" onClick={() => setPendingReschedules(prev => {const n={...prev}; delete n[patient.id]; return n;})} className="text-red-500 hover:text-red-700"><X className="w-4 h-4" /></button>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-center mt-1">
-                    <button type="button" className="text-indigo-600 text-xs font-bold hover:underline" onClick={() => setActionModal('reschedule')}>
-                      + Reagendar turno
+                    <button type="button" className="text-indigo-600 text-xs font-bold hover:underline" onClick={() => {
+                      setSelectedPatientIdForReschedule(patient.id);
+                      setActionModal('reschedule');
+                    }}>
+                      + Configurar Reagenda
                     </button>
                     <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm">
                       Guardar Evolución
@@ -236,7 +272,7 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
               </div>
             )) : (
               <div className="text-center text-slate-500 text-sm mt-10">
-                No tienes pacientes en tratamiento.
+                Aún no has atendido a ningún paciente el día de hoy.
               </div>
             )}
           </div>
@@ -297,11 +333,11 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
                  <div className="grid grid-cols-2 gap-4">
                    <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Fecha del Turno</label>
-                     <input type="date" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                     <input type="date" value={rescheduleForm.date || ''} onChange={e => setRescheduleForm({...rescheduleForm, date: e.target.value})} className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
                    </div>
                    <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Hora</label>
-                     <input type="time" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                     <input type="time" value={rescheduleForm.time || ''} onChange={e => setRescheduleForm({...rescheduleForm, time: e.target.value})} className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
                    </div>
                  </div>
                ) : (
@@ -322,11 +358,11 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
                    </div>
                    <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Cantidad de Semanas (Réplica)</label>
-                     <input type="number" min="1" defaultValue="2" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                     <input type="number" min="1" value={rescheduleForm.weeks || '2'} onChange={e => setRescheduleForm({...rescheduleForm, weeks: e.target.value})} className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
                    </div>
                    <div>
                      <label className="text-xs font-bold text-slate-500 uppercase">Fecha de inicio</label>
-                     <input type="date" className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                     <input type="date" value={rescheduleForm.startDate || ''} onChange={e => setRescheduleForm({...rescheduleForm, startDate: e.target.value})} className="w-full mt-1 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
                    </div>
                  </>
                )}
@@ -335,9 +371,24 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
              <div className="flex justify-end gap-3 mt-6">
                <button onClick={() => setActionModal(null)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors">Cancelar</button>
                <button onClick={() => {
-                 showToast("Turnos Generados", rescheduleType === 'single' ? "El turno único fue reasignado." : "La serie de turnos fue programada.", "success");
+                 if (selectedPatientIdForReschedule) {
+                   setPendingReschedules(prev => ({
+                     ...prev,
+                     [selectedPatientIdForReschedule]: {
+                       type: rescheduleType,
+                       date: rescheduleForm.date,
+                       time: rescheduleForm.time,
+                       days: selectedDays,
+                       weeks: rescheduleForm.weeks || '2',
+                       startDate: rescheduleForm.startDate
+                     }
+                   }));
+                   showToast("Reagenda Configurada", "Se aplicará al momento de Guardar la Evolución.", "info");
+                 } else {
+                   showToast("Atención", "Abre la reagenda desde 'Mis Pacientes' luego de atender.", "info");
+                 }
                  setActionModal(null);
-               }} className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-xl transition-colors shadow-sm">Generar Turno(s)</button>
+               }} className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-xl transition-colors shadow-sm">Confirmar Configuración</button>
              </div>
            </div>
         </div>

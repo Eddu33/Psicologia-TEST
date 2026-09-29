@@ -105,6 +105,80 @@ export async function addObservation(data: FormData) {
   revalidatePath("/profesional");
 }
 
+export async function saveEvolutionAndReschedule(data: FormData) {
+  const patientId = data.get("patientId") as string;
+  const professionalId = data.get("professionalId") as string;
+  const observation = data.get("observation") as string;
+  const rescheduleDataStr = data.get("rescheduleData") as string;
+
+  let observationText = observation;
+
+  if (rescheduleDataStr) {
+    const rescheduleData = JSON.parse(rescheduleDataStr);
+    
+    if (rescheduleData.type === 'single') {
+      let endHour = (parseInt(rescheduleData.time.split(':')[0]) + 1) % 24;
+      const finalEndTime = `${String(endHour).padStart(2, '0')}:${rescheduleData.time.split(':')[1]}`;
+
+      await db.appointment.create({
+        data: {
+          patientId,
+          professionalId,
+          date: rescheduleData.date,
+          startTime: rescheduleData.time,
+          endTime: finalEndTime,
+          status: "CONFIRMED",
+        }
+      });
+      observationText += `\n[Sistema: Turno reasignado para el ${rescheduleData.date} a las ${rescheduleData.time}]`;
+    } else if (rescheduleData.type === 'series') {
+      // Create multiple appointments for series
+      const startDate = new Date(rescheduleData.startDate);
+      const weeks = parseInt(rescheduleData.weeks);
+      const days = rescheduleData.days; // array of strings 'L', 'M', 'X', 'J', 'V'
+      
+      const dayMap: Record<string, number> = { 'L': 1, 'M': 2, 'X': 3, 'J': 4, 'V': 5, 'S': 6, 'D': 0 };
+      
+      for (let w = 0; w < weeks; w++) {
+        for (const dayChar of days) {
+          const targetDay = dayMap[dayChar];
+          const appDate = new Date(startDate);
+          // Advance to the target day of the week
+          const currentDay = appDate.getDay();
+          const distance = (targetDay + 7 - currentDay) % 7;
+          appDate.setDate(appDate.getDate() + distance + (w * 7));
+          
+          const appDateStr = appDate.toISOString().split('T')[0];
+          
+          await db.appointment.create({
+            data: {
+              patientId,
+              professionalId,
+              date: appDateStr,
+              startTime: "10:00", // Defaulting to 10:00 since the mock didn't capture time for series
+              endTime: "11:00",
+              status: "CONFIRMED",
+            }
+          });
+        }
+      }
+      observationText += `\n[Sistema: Serie de turnos reasignada por ${weeks} semanas los días ${days.join(', ')} desde el ${rescheduleData.startDate}]`;
+    }
+  }
+
+  await db.professionalObservation.create({
+    data: {
+      patientId,
+      professionalId,
+      observation: observationText,
+    }
+  });
+
+  revalidatePath("/profesional");
+  revalidatePath("/profesional/atendidos");
+  revalidatePath("/admisionista/calendario");
+}
+
 export async function getProfessionals() {
   return await db.user.findMany({
     where: { role: "PROFESSIONAL" }
