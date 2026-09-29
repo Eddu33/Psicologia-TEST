@@ -14,13 +14,23 @@ export default async function AdmisionistaPacientesPage() {
   if (!user || user.role !== "ADMISIONISTA") redirect("/login");
 
   const patients = await db.patient.findMany({
-    orderBy: { createdAt: "desc" }
+    orderBy: { createdAt: "desc" },
+    include: {
+      appointments: {
+        include: { professional: true },
+        orderBy: { date: 'desc' }
+      },
+      observations: {
+        include: { professional: true },
+        orderBy: { createdAt: 'desc' }
+      }
+    }
   });
 
   return (
     <DashboardLayout role="ADMISIONISTA" userName={user.name}>
       <h1 className="text-2xl font-bold text-slate-900 mb-4">Directorio Completo de Pacientes</h1>
-      <PatientDirectoryClient patients={patients} />
+      <PatientDirectoryClient patients={patients} currentUserId={user.id} />
     </DashboardLayout>
   );
 }

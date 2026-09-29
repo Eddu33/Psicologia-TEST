@@ -15,7 +15,12 @@ export default async function ProfesionalCalendarioPage() {
 
   // El profesional ve todos los turnos globales para evitar solapamientos visuales (Calendario Global)
   const appointments = await db.appointment.findMany({
-    include: { patient: true, professional: true },
+    include: { 
+      patient: {
+        include: { observations: true }
+      }, 
+      professional: true 
+    },
     orderBy: { date: 'asc' }
   });
 
@@ -24,7 +29,7 @@ export default async function ProfesionalCalendarioPage() {
       <h1 className="text-2xl font-bold text-slate-900 mb-4">Calendario Global</h1>
       <p className="text-sm text-slate-500 mb-6">Visualización de movimientos y estados de turnos en el calendario general.</p>
       
-      <CalendarClient appointments={appointments} />
+      <CalendarClient appointments={appointments} currentUserId={user.id} />
     </DashboardLayout>
   );
 }

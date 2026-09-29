@@ -17,6 +17,14 @@ export default async function AdmisionistaPage() {
 
   const patients = await getPatients();
 
+  const now = new Date();
+  const dateInArg = new Date(now.toLocaleString("en-US", { timeZone: "America/Argentina/Cordoba" }));
+  const todayStr = `${dateInArg.getFullYear()}-${String(dateInArg.getMonth() + 1).padStart(2, '0')}-${String(dateInArg.getDate()).padStart(2, '0')}`;
+
+  const patientsToday = patients.filter(patient => 
+    patient.appointments.some(app => app.date === todayStr)
+  );
+
   return (
     <DashboardLayout role="ADMISIONISTA" userName={user.name}>
       <div className="mb-8">
@@ -63,7 +71,7 @@ export default async function AdmisionistaPage() {
           <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <div>
               <h2 className="text-lg font-bold text-slate-800">Directorio de Pacientes</h2>
-              <p className="text-sm text-slate-500">Lista y estado de turnos asignados</p>
+              <p className="text-sm text-slate-500">Pacientes con turno agendado para el día de hoy ({todayStr})</p>
             </div>
             <button className="text-sm bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors font-medium">
               Filtrar
@@ -80,8 +88,9 @@ export default async function AdmisionistaPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {patients.map(patient => {
-                  const latestAppointment = [...patient.appointments].sort((a, b) => new Date(`${b.date}T${b.startTime}`).getTime() - new Date(`${a.date}T${a.startTime}`).getTime())[0];
+                {patientsToday.map(patient => {
+                  const todayAppointments = patient.appointments.filter(a => a.date === todayStr);
+                  const latestAppointment = todayAppointments.sort((a, b) => a.startTime.localeCompare(b.startTime))[0];
                   
                   return (
                   <tr key={patient.id} className="hover:bg-slate-50/80 transition-colors group">
@@ -103,27 +112,27 @@ export default async function AdmisionistaPage() {
                       {latestAppointment ? (
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-slate-800">
-                            {latestAppointment.date}
+                            Hoy, {latestAppointment.startTime}
                           </span>
                           <span className="text-xs text-blue-600 font-medium">
-                            {latestAppointment.startTime} con {latestAppointment.professional?.name || '...'}
+                            con {latestAppointment.professional?.name || '...'}
                           </span>
                         </div>
                       ) : (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                          Sin turnos
+                          Sin turnos hoy
                         </span>
                       )}
                     </td>
                     <td className="p-4 text-right">
-                      <Link href={`/admisionista/pacientes`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">Ver Ficha</Link>
+                      <Link href={`/admisionista/pacientes?search=${patient.dni}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">Ver Ficha</Link>
                     </td>
                   </tr>
                 )})}
-                {patients.length === 0 && (
+                {patientsToday.length === 0 && (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-slate-500">
-                      No hay pacientes registrados en el sistema.
+                      No hay pacientes agendados para el día de hoy.
                     </td>
                   </tr>
                 )}

@@ -14,7 +14,12 @@ export default async function AdmisionistaCalendarioPage() {
   if (!user || user.role !== "ADMISIONISTA") redirect("/login");
 
   const appointments = await db.appointment.findMany({
-    include: { patient: true, professional: true },
+    include: { 
+      patient: {
+        include: { observations: true }
+      }, 
+      professional: true 
+    },
     orderBy: { date: 'asc' }
   });
 
@@ -23,7 +28,7 @@ export default async function AdmisionistaCalendarioPage() {
       <h1 className="text-2xl font-bold text-slate-900 mb-4">Calendario Global y Reagendas</h1>
       <p className="text-sm text-slate-500 mb-6">Visualización de movimientos, reprogramaciones y estados de turnos de todos los profesionales.</p>
       
-      <CalendarClient appointments={appointments} />
+      <CalendarClient appointments={appointments} currentUserId={user.id} />
     </DashboardLayout>
   );
 }

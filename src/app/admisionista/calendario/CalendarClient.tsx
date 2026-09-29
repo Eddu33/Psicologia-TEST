@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-export function CalendarClient({ appointments }: { appointments: any[] }) {
+export function CalendarClient({ appointments, currentUserId }: { appointments: any[], currentUserId: string }) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedApp, setSelectedApp] = useState<any | null>(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -81,7 +82,11 @@ export function CalendarClient({ appointments }: { appointments: any[] }) {
               <div className={dayNumberClass}>{day}</div>
               <div className="space-y-1">
                 {dayAppointments.map(app => (
-                  <div key={app.id} className="p-1.5 bg-blue-50 border border-blue-100 rounded text-[10px] leading-tight hover:bg-blue-100 transition-colors cursor-default shadow-sm">
+                  <div 
+                    key={app.id} 
+                    className="p-1.5 bg-blue-50 border border-blue-100 rounded text-[10px] leading-tight hover:bg-blue-100 transition-colors cursor-pointer shadow-sm"
+                    onClick={() => setSelectedApp(app)}
+                  >
                     <div className="font-bold text-blue-800">{app.startTime}</div>
                     <div className="text-blue-600 truncate font-medium">{app.patient?.firstName} {app.patient?.lastName}</div>
                     <div className="text-slate-500 truncate">{app.professional?.name || 'Sin Lic.'}</div>
@@ -92,6 +97,56 @@ export function CalendarClient({ appointments }: { appointments: any[] }) {
           );
         })}
       </div>
+
+      {selectedApp && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-slate-800">Detalles de la Cita</h2>
+              <button onClick={() => setSelectedApp(null)} className="text-slate-500 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Paciente</p>
+                <p className="text-sm font-medium text-slate-800">{selectedApp.patient?.lastName}, {selectedApp.patient?.firstName}</p>
+                <p className="text-xs text-slate-500">DNI: {selectedApp.patient?.dni} • Tel: {selectedApp.patient?.phone}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Fecha y Hora</p>
+                  <p className="text-sm font-medium text-slate-800">{selectedApp.date}</p>
+                  <p className="text-xs text-slate-500">{selectedApp.startTime} - {selectedApp.endTime}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Profesional Tratante</p>
+                  <p className="text-sm font-medium text-slate-800">{selectedApp.professional?.name || 'No asignado'}</p>
+                  <p className="text-xs text-blue-600 font-medium">{selectedApp.status}</p>
+                </div>
+              </div>
+              <div>
+                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Observaciones / Detalles Clínicos</p>
+                 {(() => {
+                    const obs = selectedApp.patient?.observations?.find((o: any) => o.professionalId === selectedApp.professionalId);
+                    const isVisible = selectedApp.professionalId === currentUserId || !obs;
+                    
+                    return obs ? (
+                      <div className={`p-3 rounded-xl border border-slate-100 text-sm ${!isVisible ? 'select-none' : 'bg-slate-50'}`}>
+                        <p className={!isVisible ? 'blur-sm text-slate-400' : 'text-slate-700'}>
+                          {!isVisible ? "Contenido privado. Solo el profesional tratante puede visualizar estas notas clínicas." : obs.observation}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500 italic">No hay notas clínicas registrados para esta consulta.</p>
+                    );
+                 })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
