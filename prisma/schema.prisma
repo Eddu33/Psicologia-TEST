@@ -24,6 +24,7 @@ model User {
   appointments      Appointment[]
   observations      ProfessionalObservation[]
   licenses          License[]
+  auditLogs         AuditLog[]
 }
 
 model Patient {
@@ -90,4 +91,17 @@ model Holiday {
   description    String
   
   createdAt      DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String   // ej. "CREAR_PACIENTE", "REAGENDAR_TURNO"
+  entityType  String   // ej. "PATIENT", "APPOINTMENT", "USER"
+  entityId    String   // ID de la entidad afectada
+  details     String   // Detalles de la modificación
+  
+  userId      String?  // Quién realizó la acción
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
 }

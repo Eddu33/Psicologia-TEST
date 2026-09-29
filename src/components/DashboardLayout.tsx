@@ -25,17 +25,20 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
         return [
           { name: "Dashboard General", href: "/admin", icon: LayoutDashboard },
           { name: "Usuarios y Roles", href: "/admin/users", icon: Users },
-          { name: "Auditoría", href: "/admin/audit", icon: Activity },
+          { name: "Auditoría Global", href: "/admin/audit", icon: Activity },
         ];
       case "ADMISIONISTA":
         return [
           { name: "Dashboard", href: "/admisionista", icon: LayoutDashboard },
           { name: "Pacientes", href: "/admisionista/pacientes", icon: Users },
+          { name: "Calendario y Reagendas", href: "/admisionista/calendario", icon: Calendar },
         ];
       case "PROFESIONAL":
         return [
           { name: "Mi Agenda", href: "/profesional", icon: Calendar },
-          { name: "Historia de Citas", href: "/profesional/citas", icon: FileText },
+          { name: "Directorio de Pacientes", href: "/profesional/pacientes", icon: Users },
+          { name: "Historial de Calendario", href: "/profesional/calendario", icon: Calendar },
+          { name: "Pacientes Atendidos", href: "/profesional/atendidos", icon: Activity },
         ];
       default:
         return [];
