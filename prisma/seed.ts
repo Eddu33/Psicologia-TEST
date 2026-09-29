@@ -19,13 +19,25 @@ async function main() {
 
   // Create an admisionista for testing
   await prisma.user.upsert({
-    where: { username: "admin1" },
+    where: { username: "admisionista1" },
     update: {},
     create: {
-      username: "admin1",
+      username: "admisionista1",
       password: "password1",
       name: "Admisionista 1",
-      role: "ADMINISIONISTA",
+      role: "ADMISIONISTA",
+    },
+  })
+
+  // Create an admin for testing
+  await prisma.user.upsert({
+    where: { username: "admin_root" },
+    update: {},
+    create: {
+      username: "admin_root",
+      password: "admin123",
+      name: "Administrador General",
+      role: "ADMIN",
     },
   })
 
