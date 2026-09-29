@@ -13,10 +13,16 @@ export async function login(data: FormData) {
   });
 
   if (user && user.password === password) {
-    // In a real app, use JWT. For this test, setting user id in cookie
     const cookieStore = await cookies();
     cookieStore.set("auth_user_id", user.id);
-    redirect("/profesional");
+    
+    if (user.role === "ADMIN") {
+      redirect("/admin");
+    } else if (user.role === "ADMISIONISTA") {
+      redirect("/admisionista");
+    } else {
+      redirect("/profesional");
+    }
   }
 
   return { error: "Credenciales inválidas" };

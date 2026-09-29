@@ -9,14 +9,21 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(uuid())
-  username String @unique
-  password String
-  name     String
-  role     String @default("PROFESSIONAL") // "ADMINISIONISTA" | "PROFESSIONAL"
+  id                String   @id @default(uuid())
+  username          String   @unique
+  password          String
+  name              String
+  role              String   @default("PROFESSIONAL") // "ADMIN" | "ADMISIONISTA" | "PROFESSIONAL"
   
-  appointments Appointment[]
-  observations ProfessionalObservation[]
+  // Horarios de atención
+  morningShiftStart String?  // "HH:mm" (ej. "08:00")
+  morningShiftEnd   String?  // "HH:mm" (ej. "12:00")
+  afternoonShiftStart String? // "HH:mm" (ej. "14:00")
+  afternoonShiftEnd String?  // "HH:mm" (ej. "18:00")
+  
+  appointments      Appointment[]
+  observations      ProfessionalObservation[]
+  licenses          License[]
 }
 
 model Patient {
@@ -45,7 +52,7 @@ model Appointment {
   professionalId String?  
   professional   User?    @relation(fields: [professionalId], references: [id])
   
-  status         String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED, COMPLETED
+  status         String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED_BY_LIC, ABSENT, COMPLETED
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -61,6 +68,26 @@ model ProfessionalObservation {
   professional   User     @relation(fields: [professionalId], references: [id])
   
   observation    String
+  
+  createdAt      DateTime @default(now())
+}
+
+model License {
+  id             String   @id @default(uuid())
+  professionalId String
+  professional   User     @relation(fields: [professionalId], references: [id])
+  
+  startDate      String   // "YYYY-MM-DD"
+  endDate        String   // "YYYY-MM-DD"
+  reason         String?
+  
+  createdAt      DateTime @default(now())
+}
+
+model Holiday {
+  id             String   @id @default(uuid())
+  date           String   @unique // "YYYY-MM-DD"
+  description    String
   
   createdAt      DateTime @default(now())
 }

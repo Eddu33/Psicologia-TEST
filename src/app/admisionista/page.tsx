@@ -1,84 +1,184 @@
 import { createPatient, getPatients } from "@/app/actions";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { Calendar, UserPlus, FileText, CheckCircle2 } from "lucide-react";
 
 export default async function AdmisionistaPage() {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("auth_user_id")?.value;
+
+  if (!userId) redirect("/login");
+
+  const user = await db.user.findUnique({ where: { id: userId } });
+  if (!user || user.role !== "ADMISIONISTA") redirect("/login");
+
   const patients = await getPatients();
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50 text-gray-900">
-      <h1 className="text-3xl font-bold mb-8">Panel de Admisionistas</h1>
+    <DashboardLayout role="ADMISIONISTA" userName={user.name}>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-slate-900">Panel de Control - Admisión</h1>
+        <p className="text-slate-500 mt-1">Gestiona pacientes y asignación de turnos a profesionales.</p>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="col-span-1 bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Cargar Paciente</h2>
-          <form action={createPatient} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Nombre</label>
-              <input type="text" name="firstName" required className="w-full border p-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Apellido</label>
-              <input type="text" name="lastName" required className="w-full border p-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">DNI</label>
-              <input type="text" name="dni" required className="w-full border p-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Edad</label>
-              <input type="number" name="age" required className="w-full border p-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Teléfono</label>
-              <input type="text" name="phone" required className="w-full border p-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Observación del Admisionista</label>
-              <textarea name="adminNotes" className="w-full border p-2 rounded" rows={3}></textarea>
-            </div>
-            <button type="submit" className="bg-blue-600 text-white p-2 rounded font-medium hover:bg-blue-700">
-              Guardar Paciente
-            </button>
-          </form>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+          <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+            <UserPlus className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Total Pacientes</p>
+            <p className="text-2xl font-bold text-slate-900">{patients.length}</p>
+          </div>
         </div>
-
-        <div className="col-span-2 bg-white p-6 rounded-lg shadow overflow-auto">
-          <h2 className="text-xl font-semibold mb-4">Lista de Pacientes y Turnos</h2>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b">
-                <th className="p-2">Paciente</th>
-                <th className="p-2">DNI</th>
-                <th className="p-2">Teléfono</th>
-                <th className="p-2">Obs. Admisionista</th>
-                <th className="p-2">Turnos (Profesional)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {patients.map(patient => (
-                <tr key={patient.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2">{patient.lastName}, {patient.firstName} (Edad: {patient.age})</td>
-                  <td className="p-2">{patient.dni}</td>
-                  <td className="p-2">{patient.phone}</td>
-                  <td className="p-2 text-sm">{patient.adminNotes}</td>
-                  <td className="p-2 text-sm">
-                    {patient.appointments.length > 0 ? (
-                      <ul className="list-disc ml-4">
-                        {patient.appointments.map(app => (
-                          <li key={app.id}>
-                            {app.date} {app.startTime}-{app.endTime} con {app.professional?.name || 'Profesional Eliminado'}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span className="text-gray-500 italic">Sin turnos</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+          <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+            <Calendar className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Turnos Agendados</p>
+            <p className="text-2xl font-bold text-slate-900">
+              {patients.reduce((acc, p) => acc + p.appointments.length, 0)}
+            </p>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Atención Hoy</p>
+            <p className="text-2xl font-bold text-slate-900">12</p>
+          </div>
         </div>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Lista de Pacientes - Ocupa 2/3 */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">Directorio de Pacientes</h2>
+              <p className="text-sm text-slate-500">Lista y estado de turnos asignados</p>
+            </div>
+            <button className="text-sm bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors font-medium">
+              Filtrar
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-xs uppercase text-slate-500 font-semibold tracking-wider">
+                  <th className="p-4 border-b border-slate-100">Paciente</th>
+                  <th className="p-4 border-b border-slate-100">Contacto</th>
+                  <th className="p-4 border-b border-slate-100">Próximo Turno</th>
+                  <th className="p-4 border-b border-slate-100 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {patients.map(patient => (
+                  <tr key={patient.id} className="hover:bg-slate-50/80 transition-colors group">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-sm">
+                          {patient.firstName.charAt(0)}{patient.lastName.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-800">{patient.lastName}, {patient.firstName}</p>
+                          <p className="text-xs text-slate-500">DNI: {patient.dni} • {patient.age} años</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm text-slate-600">
+                      {patient.phone}
+                    </td>
+                    <td className="p-4">
+                      {patient.appointments.length > 0 ? (
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-slate-800">
+                            {patient.appointments[0].date}
+                          </span>
+                          <span className="text-xs text-blue-600 font-medium">
+                            {patient.appointments[0].startTime} con {patient.appointments[0].professional?.name || '...'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                          Sin turnos
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-right">
+                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Ver Ficha</button>
+                    </td>
+                  </tr>
+                ))}
+                {patients.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-slate-500">
+                      No hay pacientes registrados en el sistema.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Cargar Paciente - Ocupa 1/3 */}
+        <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col h-fit">
+          <div className="p-6 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-blue-600" />
+              Nuevo Paciente
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">Registra un paciente en la base de datos</p>
+          </div>
+          <div className="p-6">
+            <form action={createPatient} className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Nombre</label>
+                  <input type="text" name="firstName" required className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all" placeholder="Ej. Juan" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Apellido</label>
+                  <input type="text" name="lastName" required className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all" placeholder="Ej. Pérez" />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">DNI</label>
+                  <input type="text" name="dni" required className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all" placeholder="Sin puntos" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Edad</label>
+                  <input type="number" name="age" required className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all" placeholder="Años" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Teléfono</label>
+                <input type="text" name="phone" required className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all" placeholder="Ej. 11 1234-5678" />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Observaciones</label>
+                <textarea name="adminNotes" className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all resize-none" rows={3} placeholder="Motivo de consulta, derivación, etc..."></textarea>
+              </div>
+              
+              <button type="submit" className="mt-2 bg-blue-600 text-white p-3 rounded-xl font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20 w-full">
+                <UserPlus className="w-4 h-4" />
+                Guardar Paciente
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }
