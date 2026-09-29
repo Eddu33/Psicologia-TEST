@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Users, UserCog, Calendar, Activity, Search, ShieldCheck } from "lucide-react";
+import { deleteUser } from "@/app/actions";
 
 export default async function AdminDashboardPage() {
   const cookieStore = await cookies();
@@ -147,9 +148,12 @@ export default async function AdminDashboardPage() {
                     <td className="p-4 text-sm text-slate-600">
                       {u.role === 'PROFESSIONAL' ? `${u.appointments.length} turnos asignados` : '-'}
                     </td>
-                    <td className="p-4 text-right">
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3">Editar</button>
-                      <button className="text-red-600 hover:text-red-800 text-sm font-medium">Eliminar</button>
+                    <td className="p-4 text-right flex justify-end gap-2">
+                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium px-2">Editar</button>
+                      <form action={deleteUser}>
+                        <input type="hidden" name="id" value={u.id} />
+                        <button type="submit" className="text-red-600 hover:text-red-800 text-sm font-medium px-2">Eliminar</button>
+                      </form>
                     </td>
                   </tr>
                 ))}

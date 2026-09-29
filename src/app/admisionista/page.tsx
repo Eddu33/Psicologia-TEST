@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Calendar, UserPlus, FileText, CheckCircle2 } from "lucide-react";
 
 export default async function AdmisionistaPage() {
@@ -112,7 +113,7 @@ export default async function AdmisionistaPage() {
                       )}
                     </td>
                     <td className="p-4 text-right">
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Ver Ficha</button>
+                      <Link href={`/admisionista/pacientes`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">Ver Ficha</Link>
                     </td>
                   </tr>
                 ))}

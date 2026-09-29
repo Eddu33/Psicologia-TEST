@@ -84,3 +84,9 @@ export async function getProfessionals() {
     where: { role: "PROFESSIONAL" }
   });
 }
+
+export async function deleteUser(data: FormData) {
+  const id = data.get("id") as string;
+  await db.user.delete({ where: { id } });
+  revalidatePath("/admin");
+}
