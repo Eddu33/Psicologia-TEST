@@ -57,9 +57,10 @@ model Appointment {
   professional   User?    @relation(fields: [professionalId], references: [id])
   
   status         String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED_BY_LIC, ABSENT, COMPLETED
-  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  
+  observations   ProfessionalObservation[]
 }
 
 model ProfessionalObservation {
@@ -70,6 +71,9 @@ model ProfessionalObservation {
   
   professionalId String
   professional   User     @relation(fields: [professionalId], references: [id])
+  
+  appointmentId  String?
+  appointment    Appointment? @relation(fields: [appointmentId], references: [id])
   
   observation    String
   

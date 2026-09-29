@@ -47,7 +47,7 @@ export function PatientHistoryClient({ patient, currentUserId, backUrl }: { pati
             patient.appointments?.map((app: any) => {
               const isExpanded = expandedAppointment === app.id;
               
-              const observation = patient.observations?.find((obs: any) => obs.professionalId === app.professionalId);
+              const observation = patient.observations?.find((obs: any) => obs.appointmentId === app.id) || patient.observations?.find((obs: any) => obs.professionalId === app.professionalId);
               const isObservationVisible = app.professionalId === currentUserId || !observation;
               
               return (

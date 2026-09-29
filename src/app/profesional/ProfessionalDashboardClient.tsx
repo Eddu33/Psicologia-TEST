@@ -55,10 +55,12 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
     !completedEvolutions.includes(p.id)
   );
 
-  const handleSaveEvolution = async (e: React.FormEvent<HTMLFormElement>, patientId: string) => {
+  const handleSaveEvolution = async (e: React.FormEvent<HTMLFormElement>, patientId: string, appId: string) => {
     e.preventDefault();
     const formElement = e.currentTarget;
     const formData = new FormData(formElement);
+    
+    formData.append("appointmentId", appId);
     
     // Concatenate details and evolution
     const detalles = formData.get("detalles") as string;
@@ -242,7 +244,9 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
           </div>
           
           <div className="p-5 overflow-y-auto flex-1 space-y-4">
-            {attendedTodayPatients.length > 0 ? attendedTodayPatients.map(patient => (
+            {attendedTodayPatients.length > 0 ? attendedTodayPatients.map(patient => {
+              const currentApp = patient.appointments.find((a: any) => a.date === todayStr && a.status === 'ATENDIDO');
+              return (
               <div key={patient.id} className="border border-slate-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-2">
                   <div>
@@ -251,7 +255,7 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
                   </div>
                 </div>
                 
-                <form onSubmit={(e) => handleSaveEvolution(e, patient.id)} className="mt-3 flex flex-col gap-3">
+                <form onSubmit={(e) => handleSaveEvolution(e, patient.id, currentApp?.id)} className="mt-3 flex flex-col gap-3">
                   <input type="hidden" name="patientId" value={patient.id} />
                   <input type="hidden" name="professionalId" value={user.id} />
                   
@@ -297,7 +301,7 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
                   </div>
                 </form>
               </div>
-            )) : (
+            )}) : (
               <div className="text-center text-slate-500 text-sm mt-10">
                 Aún no has atendido a ningún paciente el día de hoy.
               </div>

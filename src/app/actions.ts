@@ -108,6 +108,7 @@ export async function addObservation(data: FormData) {
 export async function saveEvolutionAndReschedule(data: FormData) {
   const patientId = data.get("patientId") as string;
   const professionalId = data.get("professionalId") as string;
+  const appointmentId = data.get("appointmentId") as string;
   const observation = data.get("observation") as string;
   const rescheduleDataStr = data.get("rescheduleData") as string;
 
@@ -166,13 +167,21 @@ export async function saveEvolutionAndReschedule(data: FormData) {
     }
   }
 
-  await db.professionalObservation.create({
+  const newObservation = await db.professionalObservation.create({
     data: {
       patientId,
       professionalId,
+      appointmentId: appointmentId || undefined,
       observation: observationText,
     }
   });
+
+  if (appointmentId) {
+    await db.appointment.update({
+      where: { id: appointmentId },
+      data: { status: "FINALIZADO" }
+    });
+  }
 
   revalidatePath("/profesional");
   revalidatePath("/profesional/atendidos");
