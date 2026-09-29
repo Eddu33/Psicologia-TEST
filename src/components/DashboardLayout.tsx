@@ -20,7 +20,7 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
   const pathname = usePathname();
 
   const getLinks = () => {
-    switch(role) {
+    switch(role.toUpperCase()) {
       case "ADMIN":
         return [
           { name: "Dashboard General", href: "/admin", icon: LayoutDashboard },
