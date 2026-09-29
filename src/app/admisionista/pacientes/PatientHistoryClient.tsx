@@ -10,7 +10,7 @@ export function PatientHistoryClient({ patient, currentUserId, backUrl }: { pati
   if (!patient) return null;
 
   return (
-    <div className="max-w-4xl mx-auto pb-12">
+    <div className="w-full pb-12">
       <Link href={backUrl} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" />
         Volver al Directorio

@@ -18,6 +18,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, role, userName }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const pathname = usePathname();
 
@@ -63,24 +64,25 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-auto md:flex md:flex-col
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 transform transition-all duration-300 ease-in-out md:static md:inset-auto md:flex md:flex-col
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${isCollapsed ? 'w-20' : 'w-64'}
       `}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
-              <Activity className="text-white w-5 h-5" />
-            </div>
-            <span className="text-xl font-bold text-slate-800 tracking-tight">PsicoApp</span>
+        <div className={`flex items-center h-16 px-4 border-b border-slate-100 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="PsicoApp" className="w-8 h-8 object-contain" />
+            {!isCollapsed && <span className="text-xl font-bold text-slate-800 tracking-tight whitespace-nowrap overflow-hidden">PsicoApp</span>}
           </div>
-          <button className="md:hidden text-slate-500 hover:text-slate-700 p-1" onClick={() => setSidebarOpen(false)}>
-            <X className="w-5 h-5" />
-          </button>
+          {!isCollapsed && (
+            <button className="md:hidden text-slate-500 hover:text-slate-700 p-1 flex-shrink-0" onClick={() => setSidebarOpen(false)}>
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
-        <div className="flex-1 px-4 py-6 overflow-y-auto">
-          <div className="mb-6 px-2">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Menú Principal</p>
+        <div className="flex-1 px-3 py-6 overflow-y-auto">
+          <div className="mb-6">
+            {!isCollapsed && <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-3">Menú Principal</p>}
             <nav className="space-y-1.5">
               {links.map((link) => {
                 const isBaseRoute = ['/admin', '/admisionista', '/profesional'].includes(link.href);
@@ -93,14 +95,15 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
                   <Link 
                     key={link.name} 
                     href={link.href}
+                    title={isCollapsed ? link.name : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-blue-50 text-blue-700 shadow-sm shadow-blue-100' 
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                    }`}
+                    } ${isCollapsed ? 'justify-center' : ''}`}
                   >
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
-                    {link.name}
+                    <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
+                    {!isCollapsed && <span className="whitespace-nowrap overflow-hidden">{link.name}</span>}
                   </Link>
                 )
               })}
@@ -108,24 +111,26 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+        <div className="p-3 border-t border-slate-100 bg-slate-50/50">
           <div 
-            className="flex items-center gap-3 px-2 py-3 mb-2 rounded-xl bg-white shadow-sm border border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors"
+            className={`flex items-center gap-3 mb-2 rounded-xl bg-white shadow-sm border border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors ${isCollapsed ? 'p-2 justify-center' : 'px-3 py-3'}`}
             onClick={() => setProfileModalOpen(true)}
             title="Editar Mi Perfil"
           >
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-100 text-blue-700 flex items-center justify-center font-bold border border-blue-200 shadow-inner">
+            <div className="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-100 text-blue-700 flex items-center justify-center font-bold border border-blue-200 shadow-inner">
               {userName.charAt(0).toUpperCase()}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 truncate">{userName}</p>
-              <p className="text-xs font-medium text-slate-500 capitalize">{role.toLowerCase()}</p>
-            </div>
+            {!isCollapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900 truncate">{userName}</p>
+                <p className="text-xs font-medium text-slate-500 capitalize truncate">{role.toLowerCase()}</p>
+              </div>
+            )}
           </div>
           <form action={logout}>
-             <button type="submit" className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm text-slate-600 font-medium hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors group">
-               <LogOut className="w-4 h-4 group-hover:text-red-500" />
-               Cerrar Sesión
+             <button type="submit" title={isCollapsed ? "Cerrar Sesión" : undefined} className={`flex items-center gap-2 w-full text-sm text-slate-600 font-medium hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors group ${isCollapsed ? 'justify-center p-2' : 'px-4 py-2 justify-center'}`}>
+               <LogOut className="w-4 h-4 flex-shrink-0 group-hover:text-red-500" />
+               {!isCollapsed && <span className="whitespace-nowrap">Cerrar Sesión</span>}
              </button>
           </form>
         </div>
@@ -134,15 +139,21 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Topbar */}
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 z-10 sticky top-0">
-          <div className="flex items-center gap-4">
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-10 sticky top-0">
+          <div className="flex items-center gap-2">
             <button 
               className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="w-5 h-5" />
             </button>
-
+            <button 
+              className="hidden md:flex p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              title="Contraer/Expandir menú"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right mr-2">
