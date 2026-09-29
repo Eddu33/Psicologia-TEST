@@ -35,7 +35,7 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
           { name: "Calendario Global", href: "/admisionista/calendario", icon: Calendar },
           { name: "Directorio de Pacientes", href: "/admisionista/pacientes", icon: Users },
         ];
-      case "PROFESIONAL":
+      case "PROFESSIONAL":
         return [
           { name: "Mi Agenda", href: "/profesional", icon: LayoutDashboard },
           { name: "Calendario Global", href: "/profesional/calendario", icon: Calendar },
