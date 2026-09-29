@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 export async function createPatient(data: FormData) {
   const firstName = data.get("firstName") as string;
@@ -11,6 +12,21 @@ export async function createPatient(data: FormData) {
   const phone = data.get("phone") as string;
   const adminNotes = data.get("adminNotes") as string;
 
+  const dateStr = data.get("date") as string;
+  const timeStr = data.get("time") as string;
+
+  const now = new Date();
+  const dateInArg = new Date(now.toLocaleString("en-US", { timeZone: "America/Argentina/Cordoba" }));
+  
+  const defaultDate = `${dateInArg.getFullYear()}-${String(dateInArg.getMonth() + 1).padStart(2, '0')}-${String(dateInArg.getDate()).padStart(2, '0')}`;
+  const defaultTime = `${String(dateInArg.getHours()).padStart(2, '0')}:${String(dateInArg.getMinutes()).padStart(2, '0')}`;
+  
+  const finalDate = dateStr || defaultDate;
+  const finalTime = timeStr || defaultTime;
+  
+  let endHour = (parseInt(finalTime.split(':')[0]) + 1) % 24;
+  const finalEndTime = `${String(endHour).padStart(2, '0')}:${finalTime.split(':')[1]}`;
+
   await db.patient.create({
     data: {
       firstName,
@@ -19,11 +35,21 @@ export async function createPatient(data: FormData) {
       age,
       phone,
       adminNotes,
+      appointments: {
+        create: {
+          date: finalDate,
+          startTime: finalTime,
+          endTime: finalEndTime,
+          status: "CONFIRMED",
+        }
+      }
     },
   });
 
   revalidatePath("/admisionista");
   revalidatePath("/profesional");
+  revalidatePath("/admisionista/calendario");
+  revalidatePath("/profesional/calendario");
 }
 
 export async function getPatients() {
@@ -151,4 +177,36 @@ export async function updateUser(data: FormData) {
   });
 
   revalidatePath("/admin/users");
+}
+
+export async function updateMyProfile(data: FormData) {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("auth_user_id")?.value;
+  if (!userId) return { success: false, error: "No autorizado" };
+
+  const name = data.get("name") as string;
+  const password = data.get("password") as string;
+
+  const updateData: any = { name };
+  if (password && password.trim() !== "") {
+    updateData.password = password;
+  }
+
+  await db.user.update({
+    where: { id: userId },
+    data: updateData
+  });
+  
+  await db.auditLog.create({
+    data: {
+      action: "UPDATE_MY_PROFILE",
+      entityType: "USER",
+      entityId: userId,
+      details: `El usuario actualizó su perfil (nombre y/o contraseña)`,
+    }
+  });
+
+  // En una app real podríamos actualizar la cookie o revalidar path global, pero por ahora revalidamos los layouts
+  revalidatePath("/", "layout");
+  return { success: true };
 }

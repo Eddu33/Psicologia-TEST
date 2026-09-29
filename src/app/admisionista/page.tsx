@@ -166,6 +166,17 @@ export default async function AdmisionistaPage() {
                 <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Teléfono</label>
                 <input type="text" name="phone" required className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all" placeholder="Ej. 11 1234-5678" />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Fecha (Opcional)</label>
+                  <input type="date" name="date" className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Hora (Opcional)</label>
+                  <input type="time" name="time" className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all" />
+                </div>
+              </div>
               
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Observaciones</label>

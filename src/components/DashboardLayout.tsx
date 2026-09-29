@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/auth-actions";
+import { updateMyProfile } from "@/app/actions";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, role, userName }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const pathname = usePathname();
 
   const getLinks = () => {
@@ -81,7 +83,11 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Menú Principal</p>
             <nav className="space-y-1.5">
               {links.map((link) => {
-                const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+                const isBaseRoute = ['/admin', '/admisionista', '/profesional'].includes(link.href);
+                const isActive = isBaseRoute 
+                  ? pathname === link.href 
+                  : (pathname === link.href || pathname.startsWith(link.href + '/'));
+                
                 const Icon = link.icon;
                 return (
                   <Link 
@@ -103,7 +109,11 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
         </div>
 
         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-3 px-2 py-3 mb-2 rounded-xl bg-white shadow-sm border border-slate-100">
+          <div 
+            className="flex items-center gap-3 px-2 py-3 mb-2 rounded-xl bg-white shadow-sm border border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors"
+            onClick={() => setProfileModalOpen(true)}
+            title="Editar Mi Perfil"
+          >
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-100 text-blue-700 flex items-center justify-center font-bold border border-blue-200 shadow-inner">
               {userName.charAt(0).toUpperCase()}
             </div>
@@ -159,6 +169,36 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
           </div>
         </main>
       </div>
+
+      {/* Profile Modal */}
+      {profileModalOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-slate-800">Mi Perfil</h2>
+              <button onClick={() => setProfileModalOpen(false)} className="text-slate-500 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form action={async (formData) => {
+              await updateMyProfile(formData);
+              setProfileModalOpen(false);
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre</label>
+                <input type="text" name="name" defaultValue={userName} required className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Nueva Contraseña</label>
+                <input type="password" name="password" placeholder="Dejar en blanco para no cambiar" className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none" />
+              </div>
+              <button type="submit" className="w-full bg-blue-600 text-white p-3 rounded-xl font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors">
+                Guardar Cambios
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

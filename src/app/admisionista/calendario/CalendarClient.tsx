@@ -27,7 +27,17 @@ export function CalendarClient({ appointments }: { appointments: any[] }) {
         <h2 className="text-xl font-bold text-slate-800">{monthNames[month]} {year}</h2>
         <div className="flex gap-2">
           <button onClick={prevMonth} className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50"><ChevronLeft className="w-5 h-5 text-slate-600" /></button>
-          <button onClick={() => setCurrentDate(new Date())} className="px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-sm font-medium">Hoy</button>
+          <input 
+            type="month"
+            value={`${year}-${String(month + 1).padStart(2, '0')}`}
+            onChange={(e) => {
+              if (e.target.value) {
+                const [y, m] = e.target.value.split('-');
+                setCurrentDate(new Date(parseInt(y), parseInt(m) - 1, 1));
+              }
+            }}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-slate-50 cursor-pointer"
+          />
           <button onClick={nextMonth} className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50"><ChevronRight className="w-5 h-5 text-slate-600" /></button>
         </div>
       </div>
@@ -48,14 +58,32 @@ export function CalendarClient({ appointments }: { appointments: any[] }) {
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const dayAppointments = appointments.filter(a => a.date === dateStr);
           
+          const currentDayObj = new Date(year, month, day);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // reset time to start of day for comparison
+          
+          let dayClass = "border-b border-r border-slate-100 p-2 overflow-y-auto hover:bg-slate-50 transition-colors";
+          let dayNumberClass = "text-right text-sm font-semibold mb-1";
+          
+          if (currentDayObj < today) {
+            dayClass += " bg-slate-100/50 opacity-75"; // passed days grayed out
+            dayNumberClass += " text-slate-400";
+          } else if (currentDayObj.getTime() === today.getTime()) {
+            dayClass += " bg-blue-50/60 ring-inset ring-1 ring-blue-200"; // current day azul celeste
+            dayNumberClass += " text-blue-600";
+          } else {
+            dayClass += " bg-white"; // future days white
+            dayNumberClass += " text-slate-600";
+          }
+
           return (
-            <div key={day} className="border-b border-r border-slate-100 p-2 overflow-y-auto hover:bg-slate-50 transition-colors">
-              <div className="text-right text-sm font-semibold text-slate-400 mb-1">{day}</div>
+            <div key={day} className={dayClass}>
+              <div className={dayNumberClass}>{day}</div>
               <div className="space-y-1">
                 {dayAppointments.map(app => (
-                  <div key={app.id} className="p-1.5 bg-blue-50 border border-blue-100 rounded text-[10px] leading-tight">
+                  <div key={app.id} className="p-1.5 bg-blue-50 border border-blue-100 rounded text-[10px] leading-tight hover:bg-blue-100 transition-colors cursor-default shadow-sm">
                     <div className="font-bold text-blue-800">{app.startTime}</div>
-                    <div className="text-blue-600 truncate">{app.patient.firstName} {app.patient.lastName}</div>
+                    <div className="text-blue-600 truncate font-medium">{app.patient?.firstName} {app.patient?.lastName}</div>
                     <div className="text-slate-500 truncate">{app.professional?.name || 'Sin Lic.'}</div>
                   </div>
                 ))}
