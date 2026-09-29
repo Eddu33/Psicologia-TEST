@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { 
   Calendar, Users, Activity, Settings, UserPlus, FileText, 
-  LogOut, Menu, X, Bell, Search, LayoutDashboard
+  LogOut, Menu, X, Bell, Search, LayoutDashboard, StickyNote
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -31,12 +31,14 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
           { name: "Directorio de Pacientes", href: "/admin/pacientes", icon: Users },
           { name: "Usuarios y Roles", href: "/admin/users", icon: Users },
           { name: "Auditoría Global", href: "/admin/audit", icon: Activity },
+          { name: "Notas (Posticks)", href: "/notas", icon: StickyNote },
         ];
       case "ADMISIONISTA":
         return [
           { name: "Dashboard", href: "/admisionista", icon: LayoutDashboard },
           { name: "Calendario Global", href: "/admisionista/calendario", icon: Calendar },
           { name: "Directorio de Pacientes", href: "/admisionista/pacientes", icon: Users },
+          { name: "Notas (Posticks)", href: "/notas", icon: StickyNote },
         ];
       case "PROFESSIONAL":
         return [
@@ -44,6 +46,7 @@ export function DashboardLayout({ children, role, userName }: DashboardLayoutPro
           { name: "Calendario Global", href: "/profesional/calendario", icon: Calendar },
           { name: "Directorio de Pacientes", href: "/profesional/pacientes", icon: Users },
           { name: "Pacientes Atendidos", href: "/profesional/atendidos", icon: Activity },
+          { name: "Notas (Posticks)", href: "/notas", icon: StickyNote },
         ];
       default:
         return [];

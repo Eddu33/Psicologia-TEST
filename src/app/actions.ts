@@ -127,7 +127,7 @@ export async function saveEvolutionAndReschedule(data: FormData) {
           date: rescheduleData.date,
           startTime: rescheduleData.time,
           endTime: finalEndTime,
-          status: "CONFIRMED",
+          status: "PENDIENTE",
         }
       });
       observationText += `\n[Sistema: Turno reasignado para el ${rescheduleData.date} a las ${rescheduleData.time}]`;
@@ -157,7 +157,7 @@ export async function saveEvolutionAndReschedule(data: FormData) {
               date: appDateStr,
               startTime: "10:00", // Defaulting to 10:00 since the mock didn't capture time for series
               endTime: "11:00",
-              status: "CONFIRMED",
+              status: "PENDIENTE",
             }
           });
         }
@@ -315,6 +315,20 @@ export async function markAsAttended(data: FormData) {
   revalidatePath("/profesional/calendario");
 }
 
+export async function markAsArrived(data: FormData) {
+  const appointmentId = data.get("appointmentId") as string;
+  await db.appointment.update({
+    where: { id: appointmentId },
+    data: { status: "LLEGADA_CONFIRMADA" }
+  });
+
+  revalidatePath("/admisionista");
+  revalidatePath("/admisionista/calendario");
+  revalidatePath("/admisionista/pacientes");
+  revalidatePath("/profesional/calendario");
+  revalidatePath("/admin/calendario");
+}
+
 export async function updatePatient(data: FormData) {
   const id = data.get("id") as string;
   const firstName = data.get("firstName") as string;
@@ -344,4 +358,80 @@ export async function deletePatient(data: FormData) {
 
   revalidatePath("/admisionista/pacientes");
   revalidatePath("/admisionista");
+}
+
+// ----------------------------------------------------
+// NOTES MODULE (POSTICKS)
+// ----------------------------------------------------
+
+export async function createNote(data: FormData) {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("auth_user_id")?.value;
+  if (!userId) return;
+
+  const title = data.get("title") as string;
+  const content = data.get("content") as string;
+  let color = data.get("color") as string;
+
+  if (!color) {
+    const COLORS = ['yellow', 'green', 'blue', 'pink', 'purple'];
+    color = COLORS[Math.floor(Math.random() * COLORS.length)];
+  }
+
+  await db.note.create({
+    data: {
+      title,
+      content,
+      color,
+      ownerId: userId,
+    }
+  });
+
+  revalidatePath("/notas");
+}
+
+export async function updateNote(data: FormData) {
+  const id = data.get("id") as string;
+  const title = data.get("title") as string;
+  const content = data.get("content") as string;
+  const color = data.get("color") as string;
+
+  await db.note.update({
+    where: { id },
+    data: { title, content, color }
+  });
+
+  revalidatePath("/notas");
+}
+
+export async function deleteNote(data: FormData) {
+  const id = data.get("id") as string;
+
+  await db.note.delete({ where: { id } });
+
+  revalidatePath("/notas");
+}
+
+export async function shareNote(data: FormData) {
+  const noteId = data.get("noteId") as string;
+  const targetUserId = data.get("userId") as string;
+  const actionType = data.get("actionType") as string;
+
+  if (actionType === "add") {
+    await db.note.update({
+      where: { id: noteId },
+      data: {
+        sharedWith: { connect: { id: targetUserId } }
+      }
+    });
+  } else {
+    await db.note.update({
+      where: { id: noteId },
+      data: {
+        sharedWith: { disconnect: { id: targetUserId } }
+      }
+    });
+  }
+
+  revalidatePath("/notas");
 }

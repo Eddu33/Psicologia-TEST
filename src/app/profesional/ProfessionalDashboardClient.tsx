@@ -18,6 +18,7 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
   
   const [pendingReschedules, setPendingReschedules] = useState<Record<string, any>>({});
   const [selectedPatientIdForReschedule, setSelectedPatientIdForReschedule] = useState<string | null>(null);
+  const [completedEvolutions, setCompletedEvolutions] = useState<string[]>([]);
   
   const [toastMessage, setToastMessage] = useState<{title: string, desc: string, type: 'success' | 'info'} | null>(null);
 
@@ -50,15 +51,25 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
   const todayAppointments = appointments.filter(a => a.date === todayStr);
   
   const attendedTodayPatients = myPatients.filter(p => 
-    p.appointments.some((a: any) => a.date === todayStr && a.status === 'ATENDIDO')
+    p.appointments.some((a: any) => a.date === todayStr && a.status === 'ATENDIDO') &&
+    !completedEvolutions.includes(p.id)
   );
 
   const handleSaveEvolution = async (e: React.FormEvent<HTMLFormElement>, patientId: string) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const formElement = e.currentTarget;
+    const formData = new FormData(formElement);
+    
+    // Concatenate details and evolution
+    const detalles = formData.get("detalles") as string;
+    const evolucion = formData.get("evolucion") as string;
+    const combined = `Detalles/Observaciones: ${detalles}\n\nEvolución: ${evolucion}`;
+    formData.set("observation", combined);
+
     if (pendingReschedules[patientId]) {
       formData.append("rescheduleData", JSON.stringify(pendingReschedules[patientId]));
     }
+    
     await saveEvolutionAndReschedule(formData);
     showToast("Evolución Guardada", "Los datos y la reagenda (si hubo) se guardaron correctamente.", "success");
     setPendingReschedules(prev => {
@@ -66,7 +77,8 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
       delete next[patientId];
       return next;
     });
-    (e.target as HTMLFormElement).reset();
+    setCompletedEvolutions(prev => [...prev, patientId]);
+    formElement.reset();
   };
 
   return (
@@ -239,16 +251,31 @@ export function ProfessionalDashboardClient({ user, appointments, myPatients }: 
                   </div>
                 </div>
                 
-                <form onSubmit={(e) => handleSaveEvolution(e, patient.id)} className="mt-3 flex flex-col gap-2">
+                <form onSubmit={(e) => handleSaveEvolution(e, patient.id)} className="mt-3 flex flex-col gap-3">
                   <input type="hidden" name="patientId" value={patient.id} />
                   <input type="hidden" name="professionalId" value={user.id} />
-                  <textarea 
-                    name="observation" 
-                    required 
-                    className="border border-slate-200 p-3 rounded-xl text-sm w-full focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-slate-50" 
-                    rows={3} 
-                    placeholder="Escribir evolución u observación (privado)..."
-                  ></textarea>
+                  
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 mb-1 block">Observaciones / Detalles</label>
+                    <textarea 
+                      name="detalles" 
+                      required 
+                      className="border border-slate-200 p-3 rounded-xl text-sm w-full focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-slate-50" 
+                      rows={2} 
+                      placeholder="Detalles de la sesión..."
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 mb-1 block">Evolución</label>
+                    <textarea 
+                      name="evolucion" 
+                      required 
+                      className="border border-slate-200 p-3 rounded-xl text-sm w-full focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-slate-50" 
+                      rows={3} 
+                      placeholder="Escribir evolución (privado)..."
+                    ></textarea>
+                  </div>
                   
                   {pendingReschedules[patient.id] && (
                     <div className="bg-indigo-50 border border-indigo-100 p-2 rounded-lg text-xs text-indigo-800 flex justify-between items-center">

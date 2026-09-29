@@ -110,12 +110,12 @@ export function PatientHistoryClient({ patient, currentUserId, backUrl }: { pati
                           Detalles / Observaciones del Profesional
                         </p>
                         {observation ? (
-                          <div className={`p-4 rounded-xl border text-sm ${!isObservationVisible ? 'border-slate-100 select-none bg-slate-50' : 'border-indigo-100 bg-indigo-50/30'}`}>
-                            <p className={!isObservationVisible ? 'blur-md text-slate-400 py-2' : 'text-slate-800 leading-relaxed'}>
-                              {!isObservationVisible 
-                                ? "Contenido privado. Solo el profesional tratante puede visualizar estas notas clínicas completas de la sesión." 
-                                : observation.observation}
-                            </p>
+                          <div className={`p-4 rounded-xl border text-sm ${!isObservationVisible ? 'border-red-100 bg-red-50 text-red-800 font-medium text-center py-6' : 'border-indigo-100 bg-indigo-50/30'}`}>
+                            {!isObservationVisible ? (
+                              <p>Información confidencial solamente para el Lic. {app.professional?.name || 'que lo atendió'}</p>
+                            ) : (
+                              <p className="text-slate-800 leading-relaxed whitespace-pre-wrap">{observation.observation}</p>
+                            )}
                           </div>
                         ) : (
                           <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 text-sm">

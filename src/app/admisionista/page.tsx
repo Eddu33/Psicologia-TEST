@@ -1,10 +1,10 @@
-import { createPatient, getPatients } from "@/app/actions";
+import { createPatient, getPatients, markAsArrived } from "@/app/actions";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Calendar, UserPlus, FileText, CheckCircle2 } from "lucide-react";
+import { Calendar, UserPlus, FileText, CheckCircle2, CheckCircle } from "lucide-react";
 
 export default async function AdmisionistaPage() {
   const cookieStore = await cookies();
@@ -107,13 +107,26 @@ export default async function AdmisionistaPage() {
                     </td>
                     <td className="p-4">
                       {latestAppointment ? (
-                        <div className="flex flex-col">
+                        <div className="flex flex-col gap-1">
                           <span className="text-sm font-medium text-slate-800">
                             Hoy, {latestAppointment.startTime}
                           </span>
                           <span className="text-xs text-blue-600 font-medium">
                             con {latestAppointment.professional?.name || '...'}
                           </span>
+                          {latestAppointment.status !== 'ATENDIDO' && latestAppointment.status !== 'LLEGADA_CONFIRMADA' && (
+                            <form action={markAsArrived}>
+                              <input type="hidden" name="appointmentId" value={latestAppointment.id} />
+                              <button type="submit" className="flex items-center gap-1 mt-1 text-[10px] uppercase tracking-wide font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded-md transition-colors w-fit">
+                                <CheckCircle className="w-3 h-3" /> Confirmar Llegada
+                              </button>
+                            </form>
+                          )}
+                          {latestAppointment.status === 'LLEGADA_CONFIRMADA' && (
+                            <span className="inline-flex items-center gap-1 mt-1 text-[10px] uppercase tracking-wide font-bold text-amber-600">
+                              <CheckCircle className="w-3 h-3" /> En espera
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">

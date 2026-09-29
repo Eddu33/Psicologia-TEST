@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { assignAppointmentToMe } from "@/app/actions";
+import { assignAppointmentToMe, markAsArrived } from "@/app/actions";
 
 export function CalendarClient({ appointments, currentUserId, userRole }: { appointments: any[], currentUserId: string, userRole?: string }) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -82,17 +82,41 @@ export function CalendarClient({ appointments, currentUserId, userRole }: { appo
             <div key={day} className={dayClass}>
               <div className={dayNumberClass}>{day}</div>
               <div className="space-y-1">
-                {dayAppointments.map(app => (
-                  <div 
-                    key={app.id} 
-                    className="p-1.5 bg-blue-50 border border-blue-100 rounded text-[10px] leading-tight hover:bg-blue-100 transition-colors cursor-pointer shadow-sm"
-                    onClick={() => setSelectedApp(app)}
-                  >
-                    <div className="font-bold text-blue-800">{app.startTime}</div>
-                    <div className="text-blue-600 truncate font-medium">{app.patient?.firstName} {app.patient?.lastName}</div>
-                    <div className="text-slate-500 truncate">{app.professional?.name || 'Sin Lic.'}</div>
-                  </div>
-                ))}
+                {dayAppointments.map(app => {
+                  let appClass = "p-1.5 border rounded text-[10px] leading-tight transition-colors cursor-pointer shadow-sm";
+                  let timeClass = "font-bold";
+                  let nameClass = "truncate font-medium";
+                  let profClass = "truncate";
+                  
+                  if (app.status === 'ATENDIDO') {
+                    appClass += " bg-emerald-50 border-emerald-200 hover:bg-emerald-100";
+                    timeClass += " text-emerald-800";
+                    nameClass += " text-emerald-700";
+                    profClass += " text-emerald-600";
+                  } else if (app.status === 'LLEGADA_CONFIRMADA') {
+                    appClass += " bg-amber-50 border-amber-200 hover:bg-amber-100";
+                    timeClass += " text-amber-800";
+                    nameClass += " text-amber-700";
+                    profClass += " text-amber-600";
+                  } else {
+                    appClass += " bg-blue-50 border-blue-100 hover:bg-blue-100";
+                    timeClass += " text-blue-800";
+                    nameClass += " text-blue-600";
+                    profClass += " text-slate-500";
+                  }
+
+                  return (
+                    <div 
+                      key={app.id} 
+                      className={appClass}
+                      onClick={() => setSelectedApp(app)}
+                    >
+                      <div className={timeClass}>{app.startTime}</div>
+                      <div className={nameClass}>{app.patient?.firstName} {app.patient?.lastName}</div>
+                      <div className={profClass}>{app.professional?.name || 'Sin Lic.'}</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -136,7 +160,25 @@ export function CalendarClient({ appointments, currentUserId, userRole }: { appo
                       </button>
                     </form>
                   ) : (
-                    <p className="text-sm text-blue-600 font-medium">{selectedApp.status}</p>
+                    <div>
+                      <p className={`text-sm font-bold uppercase tracking-wider ${
+                        selectedApp.status === 'ATENDIDO' ? 'text-emerald-600' :
+                        selectedApp.status === 'LLEGADA_CONFIRMADA' ? 'text-amber-600' :
+                        'text-blue-600'
+                      }`}>{selectedApp.status}</p>
+                      
+                      {userRole !== 'PROFESSIONAL' && selectedApp.status !== 'ATENDIDO' && selectedApp.status !== 'LLEGADA_CONFIRMADA' && (
+                        <form action={async (formData) => {
+                          await markAsArrived(formData);
+                          setSelectedApp({ ...selectedApp, status: "LLEGADA_CONFIRMADA" });
+                        }}>
+                          <input type="hidden" name="appointmentId" value={selectedApp.id} />
+                          <button type="submit" className="mt-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold px-3 py-1.5 rounded-lg transition-colors">
+                            Confirmar Llegada
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
