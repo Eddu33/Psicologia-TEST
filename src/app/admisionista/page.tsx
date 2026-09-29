@@ -73,9 +73,6 @@ export default async function AdmisionistaPage() {
               <h2 className="text-lg font-bold text-slate-800">Directorio de Pacientes</h2>
               <p className="text-sm text-slate-500">Pacientes con turno agendado para el día de hoy ({todayStr})</p>
             </div>
-            <button className="text-sm bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors font-medium">
-              Filtrar
-            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
