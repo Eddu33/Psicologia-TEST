@@ -4,25 +4,24 @@ import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { CalendarClient } from "@/app/admisionista/calendario/CalendarClient";
 
-export default async function ProfesionalCalendarioPage() {
+export default async function AdminCalendarioPage() {
   const cookieStore = await cookies();
   const userId = cookieStore.get("auth_user_id")?.value;
 
   if (!userId) redirect("/login");
 
   const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user || user.role !== "PROFESSIONAL") redirect("/login");
+  if (!user || user.role !== "ADMIN") redirect("/login");
 
-  // El profesional ve todos los turnos globales para evitar solapamientos visuales (Calendario Global)
   const appointments = await db.appointment.findMany({
     include: { patient: true, professional: true },
     orderBy: { date: 'asc' }
   });
 
   return (
-    <DashboardLayout role="PROFESSIONAL" userName={user.name}>
-      <h1 className="text-2xl font-bold text-slate-900 mb-4">Calendario Global</h1>
-      <p className="text-sm text-slate-500 mb-6">Visualización de movimientos y estados de turnos en el calendario general.</p>
+    <DashboardLayout role="ADMIN" userName={user.name}>
+      <h1 className="text-2xl font-bold text-slate-900 mb-4">Calendario Global y Reagendas</h1>
+      <p className="text-sm text-slate-500 mb-6">Visualización de movimientos, reprogramaciones y estados de turnos de todos los profesionales.</p>
       
       <CalendarClient appointments={appointments} />
     </DashboardLayout>
