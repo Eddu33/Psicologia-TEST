@@ -32,3 +32,8 @@ html, body {
   min-height: 100vh;
   background-color: var(--background);
 }
+
+input, select, textarea {
+  color: #0f172a !important; /* text-slate-900 */
+  background-color: #ffffff !important;
+}
